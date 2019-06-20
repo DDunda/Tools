@@ -16,13 +16,25 @@ namespace Tools
 	{
 		public static void Write(string[] lines, string location)
 		{
+			if (location == null) throw new ArgumentNullException("path");
+			if (lines == null) throw new ArgumentNullException("lines");
+
+			if (lines.Length == 0)
+			{
+				using (File.Create(location)) { } // Create an empty file
+				return;
+			}
 			using (StreamWriter stream = new StreamWriter(location))
 			{
-				foreach (string line in lines)
-				{
-					stream.WriteLine(line);
-				}
+				for (int i = 0; i < lines.Length - 1; i++)
+					stream.WriteLine(lines[i]);
+
+				stream.Write(lines[lines.Length - 1]); // Writes last line without a closing newline character
 			}
+		}
+		public static void Write(byte[] bytes, string location)
+		{
+			File.WriteAllBytes(location, bytes);
 		}
 		public static void Append(string[] lines, string location)
 		{
