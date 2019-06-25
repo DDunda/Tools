@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\NewDesktop\\Everything\\Shit\\Programming\\C#\\Tools\\Tools.csproj": {}
+    "D:\\NewDesktop\\Everything\\Shit\\Programming\\Github\\Tools\\Tools\\Tools.csproj": {}
   },
   "projects": {
-    "D:\\NewDesktop\\Everything\\Shit\\Programming\\C#\\Tools\\Tools.csproj": {
+    "D:\\NewDesktop\\Everything\\Shit\\Programming\\Github\\Tools\\Tools\\Tools.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\NewDesktop\\Everything\\Shit\\Programming\\C#\\Tools\\Tools.csproj",
+        "projectUniqueName": "D:\\NewDesktop\\Everything\\Shit\\Programming\\Github\\Tools\\Tools\\Tools.csproj",
         "projectName": "Tools",
-        "projectPath": "D:\\NewDesktop\\Everything\\Shit\\Programming\\C#\\Tools\\Tools.csproj",
+        "projectPath": "D:\\NewDesktop\\Everything\\Shit\\Programming\\Github\\Tools\\Tools\\Tools.csproj",
         "packagesPath": "C:\\Users\\New\\.nuget\\packages\\",
-        "outputPath": "D:\\NewDesktop\\Everything\\Shit\\Programming\\C#\\Tools\\obj\\",
+        "outputPath": "D:\\NewDesktop\\Everything\\Shit\\Programming\\Github\\Tools\\Tools\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

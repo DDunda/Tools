@@ -7,8 +7,9 @@ namespace Tools
 		public static void Main()
 		{
 			Vector2 pointer = Vector2.Unit;
-			for (int i = 0; i < 360; i++)
-				Console.WriteLine(i + " " + FastMath.Cos(i) + " " + FastMath.Sin(i) + " " + Vector2.VectorFromAngleAndSize(i).ToString() + " " + Math.Cos(i * Math.PI / 180) + " " + Math.Sin(i * Math.PI / 180));
+			for (int i = -100; i < 100; i++) Console.WriteLine(FastMath.RadianAngleClamp(i / 180.0 * Math.PI));
+			for (int i = 0; i < 720; i++)
+				Console.WriteLine($"{i} {FastMath.Cos(i * (float)Math.PI / 180)} {FastMath.Sin(i * (float)Math.PI / 180)} {Vector2.VectorFromAngleAndSize(i).ToString()} {Math.Cos(i * Math.PI / 180)} {Math.Sin(i * Math.PI / 180)}");
 		}
 	}
 
@@ -58,14 +59,19 @@ namespace Tools
 		}
 	}
 
-	public static class FastMath
+	public static class FastMath // Math that is often slow or not included in the standard Math library
 	{
-		public static float Sin(float x)
+		public static float Sinc(float x) => x == 0 ? 1 : Sin(x) / x;
+
+		public static float Sin(float x) // Uses taylor series
 		{
 			//a = (float)(a*Math.PI/2+1)%2-1;
-			float a = (float)(2 * Math.PI * AngleClamp(x) - Math.PI);
+			//float a = (float)(2 * Math.PI * RadianAngleClamp(x) - Math.PI);
+			float a = RadianAngleClamp(x);
+			a = a > Math.PI ? 2 * (float)Math.PI - a : a;
+			a = a > Math.PI / 2 ? (float)Math.PI - a : a;
 			float a2 = a * a;
-			return
+			return (RadianAngleClamp(x) > Math.PI ? -1 : 1) *
 			/*  a*(1+a2*( //x
                 (-1/6)+a2*( //-x^3/3!
                 (1/120)+a2*( //x^5/5!
@@ -83,61 +89,31 @@ namespace Tools
 									0.00000000016059043836821614599392377170155f //x^13/13!
 								)))))));
 		}
-		public static float Cos(float a)
-		{
-			return FastMath.Sin(a + 90);
-		}
-		public static float AngleClamp(float x)
-		{
-			return (x - 180) / 360f - (float)Math.Floor((x - 180) / 360f);
-		}
-		public static bool IsEven(long n)
-		{
-			return (n & 1) == 0;
-		}
-		public static bool IsOdd(long n)
-		{
-			return (n & 1) == 1;
-		}
-		public static double Abs(double a)
-		{
-			return a > 0 ? a : -a;
-		}
-		public static double Mod(double a, double b)
-		{
-			return a - Abs(b) * Floor(a / Abs(b));
-		}
-		public static long Floor(double a)
-		{
-			return a < 0 ? (int)a - 1 : (int)a;
-		}
-		public static long Ceiling(double a)
-		{
-			return a > 0 ? (int)a + 1 : (int)a;
-		}
-		public static long Round(double a)
-		{
-			return Floor(a + 0.5f);
-		}
+		public static float Cos(float a) => Sin(a + (float)Math.PI / 2);
+		public static float DegreeAngleClamp(float x) => Mod(x, 360f);
+		public static double DegreeAngleClamp(double x) => Mod(x, 360.0);
+		public static float RadianAngleClamp(float x) => Mod(x, 2 * (float)Math.PI);
+		public static double RadianAngleClamp(double x) => Mod(x, 2 * Math.PI);
+		public static bool IsEven(long n) => (n & 1) == 0;
+		public static bool IsOdd(long n) => (n & 1) == 1;
+		public static double Abs(double a) => a < 0 ? -a : a;
+		public static float Abs(float a) => a < 0 ? -a : a;
+		public static double Mod(double a, double b) => a - Abs(b) * Floor(a / Abs(b)); // The floored type modulo in default c# is annoying
+		public static float Mod(float a, float b) => a - Abs(b) * Floor(a / Abs(b));
+		public static long Floor(double a) => a >= 0 || a % 1 == 0 ? (long)a : (long)a - 1; // Why are rounded/floored/ceiled(?) values doubles in default math? They are whole numbers!
+		public static long Ceiling(double a) => a <= 0 || a % 1 == 0 ? (long)a : (long)a + 1;
+		public static long Round(double a) => Floor(a + 0.5f);
 	}
 
-	public sealed class Vector2
+	public sealed class Vector2 : VectorN
 	{
-		public double x;
-		public double y;
+		public double x { get => this[0]; set => this[0] = value; }
+		public double y { get => this[1]; set => this[1] = value; }
 		public double size { get { return Math.Sqrt(this.x * this.x + this.y * this.y); } }
 		public double sqrSize { get { return this.x * this.x + this.y * this.y; } }
 		public Vector2 normalised { get { return this / this.size; } }
-		public Vector2(double x = 0, double y = 0)
-		{
-			this.x = x;
-			this.y = y;
-		}
-		public Vector2(Vector2 v)
-		{
-			this.x = v.x;
-			this.y = v.y;
-		}
+		public Vector2(double x = 0, double y = 0) : base(x, y) { }
+		public Vector2(Vector2 v) : base(v.x, v.y) { }
 		public static Vector2 VectorFromAngleAndSize(double angle, double m = 1)
 		{
 			return Vector2.Unit.RotateDegrees(angle) * m;
@@ -284,5 +260,118 @@ namespace Tools
 			return v.sqrSize <= m * m;
 		}
 
+	}
+
+	public class VectorN
+	{
+		private double[] data;
+		public readonly int dimensions;
+
+		public double this[int index]
+		{
+			get => data[index];
+			set => data[index] = value;
+		}
+
+		public VectorN(params double[] values)
+		{
+			this.data = values;
+			this.dimensions = values.Length;
+		}
+		public VectorN(int dimensions) : this(new double[dimensions]) { }
+		public VectorN(VectorN vector) : this((double[])vector) { }
+
+		public static explicit operator double[](VectorN vector)
+		{
+			double[] data = new double[vector.dimensions];
+			for (int i = 0; i < vector.dimensions; i++)
+				data[i] = vector[i];
+			return data;
+
+		}
+	}
+
+	// Adapted from coding train code: https://thecodingtrain.com/CodingChallenges/112-3d-rendering.html
+	public sealed class Matrix
+	{
+		private double[,] matrix;
+		public readonly int width;
+		public readonly int height;
+
+		public double this[int x, int y]
+		{
+			get => matrix[x, y];
+			set => matrix[x, y] = value;
+		}
+
+		public Matrix(double[] array)
+		{
+			this.matrix = new double[array.Length, 1];
+			for (int i = 0; i < array.Length; i++)
+				this.matrix[i, 0] = array[i];
+			this.width = 1;
+			this.height = matrix.GetLength(0);
+		}
+		public Matrix(double[,] matrix)
+		{
+			this.matrix = matrix;
+			this.width = matrix.GetLength(1); // I hate that this has to be backwards, ugh. Come on math, just use standard cartesian coordinates smh
+			this.height = matrix.GetLength(0);
+		}
+		public Matrix(VectorN vector) : this((double[])vector) { }
+
+		public static VectorN matrixToVec(Matrix m)
+		{
+			double[] data = new double[m.height];
+			return new VectorN(m[0, 0], m[1, 0], m.height > 2 ? m[2, 0] : 0);
+		}
+
+		public void Print()
+		{
+			int cols = this.width;
+			int rows = this.height;
+			Console.WriteLine($"{rows}x{cols}");
+			Console.WriteLine("----------------");
+			for (int i = 0; i < rows; i++)
+			{
+				string line = "";
+				for (int j = 0; j < cols; j++)
+				{
+					line += (this[i, j] + " ");
+				}
+				Console.WriteLine(line);
+			}
+			Console.WriteLine();
+		}
+		public static VectorN matmulvec(Matrix a, VectorN vec)
+		{
+			Matrix m = new Matrix(vec);
+			Matrix r = matmul(a, m);
+			return matrixToVec(r);
+		}
+		public static Matrix matmul(Matrix a, Matrix b)
+		{
+			int colsA = a.width;
+			int rowsA = a.height;
+			int colsB = b.width;
+			int rowsB = b.height;
+
+			if (colsA != rowsB) throw new ArgumentException("Columns of A must match rows of B");
+
+			double[,] result = new double[rowsA, colsB];
+			for (int j = 0; j < rowsA; j++)
+			{
+				for (int i = 0; i < colsB; i++)
+				{
+					double sum = 0;
+					for (int n = 0; n < colsA; n++)
+					{
+						sum += a[j, n] * b[n, i];
+					}
+					result[j, i] = sum;
+				}
+			}
+			return new Matrix(result);
+		}
 	}
 }
