@@ -295,13 +295,18 @@ namespace Tools
 	public sealed class Matrix
 	{
 		private double[,] matrix;
+
+		public double[,] data
+		{
+			get => matrix;
+		}
 		public readonly int width;
 		public readonly int height;
 
-		public double this[int x, int y]
+		public double this[int y, int x]
 		{
-			get => matrix[x, y];
-			set => matrix[x, y] = value;
+			get => matrix[y, x];
+			set => matrix[y, x] = value;
 		}
 
 		public Matrix(double[] array)
@@ -315,8 +320,14 @@ namespace Tools
 		public Matrix(double[,] matrix)
 		{
 			this.matrix = matrix;
-			this.width = matrix.GetLength(1); // I hate that this has to be backwards, ugh. Come on math, just use standard cartesian coordinates smh
+			this.width = matrix.GetLength(1);
 			this.height = matrix.GetLength(0);
+		}
+		public Matrix(Matrix matrix)
+		{
+			this.matrix = matrix.data;
+			this.width = matrix.width;
+			this.height = matrix.height;
 		}
 		public Matrix(VectorN vector) : this((double[])vector) { }
 
@@ -372,6 +383,26 @@ namespace Tools
 				}
 			}
 			return new Matrix(result);
+		}
+		public static Matrix operator *(Matrix a, double m)
+		{
+			Matrix b = new Matrix(a);
+			for (int i = 0; i < a.height; i++)
+				for (int j = 0; j < a.width; j++)
+					b[i, j] *= m;
+			return b;
+		}
+		public static Matrix operator *(double m, Matrix a)
+		{
+			return a * m;
+		}
+		public static explicit operator VectorN(Matrix matrix)
+		{
+			double[] data = new double[matrix.height];
+			for (int i = 0; i < matrix.height; i++)
+				data[i] = matrix[i, 0];
+			return new VectorN(data);
+
 		}
 	}
 }
