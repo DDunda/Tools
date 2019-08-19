@@ -1,0 +1,11 @@
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\release\netcoreapp2.1\Tools.deps.json
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\release\netcoreapp2.1\Tools.runtimeconfig.json
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\release\netcoreapp2.1\Tools.runtimeconfig.dev.json
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\release\netcoreapp2.1\Tools.dll
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\release\netcoreapp2.1\Tools.pdb
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\release\netcoreapp2.1\Tools.csprojAssemblyReference.cache
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\release\netcoreapp2.1\Tools.csproj.CoreCompileInputs.cache
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\release\netcoreapp2.1\Tools.AssemblyInfoInputs.cache
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\release\netcoreapp2.1\Tools.AssemblyInfo.cs
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\release\netcoreapp2.1\Tools.dll
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\release\netcoreapp2.1\Tools.pdb

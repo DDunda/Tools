@@ -21,8 +21,6 @@ D:\NewDesktop\Everything\Shit\Programming\C#\Tools\obj\Debug\netcoreapp2.1\Tools
 D:\NewDesktop\Everything\Shit\Programming\C#\Tools\obj\Debug\netcoreapp2.1\Tools.dll
 D:\NewDesktop\Everything\Shit\Programming\C#\Tools\obj\Debug\netcoreapp2.1\Tools.pdb
 D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\Debug\netcoreapp2.1\Tools.deps.json
-D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\Debug\netcoreapp2.1\Tools.runtimeconfig.json
-D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\Debug\netcoreapp2.1\Tools.runtimeconfig.dev.json
 D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\Debug\netcoreapp2.1\Tools.dll
 D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\Debug\netcoreapp2.1\Tools.pdb
 D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\Debug\netcoreapp2.1\Tools.csprojAssemblyReference.cache
@@ -31,3 +29,5 @@ D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\Debug\netcoreap
 D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\Debug\netcoreapp2.1\Tools.AssemblyInfo.cs
 D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\Debug\netcoreapp2.1\Tools.dll
 D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\obj\Debug\netcoreapp2.1\Tools.pdb
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\Debug\netcoreapp2.1\Tools.runtimeconfig.json
+D:\NewDesktop\Everything\Shit\Programming\Github\Tools\Tools\bin\Debug\netcoreapp2.1\Tools.runtimeconfig.dev.json

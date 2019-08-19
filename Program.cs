@@ -1,5 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using System.Linq;
 namespace Tools
 {
 	public class Program
@@ -10,6 +13,44 @@ namespace Tools
 			for (int i = -100; i < 100; i++) Console.WriteLine(FastMath.RadianAngleClamp(i / 180.0 * Math.PI));
 			for (int i = 0; i < 720; i++)
 				Console.WriteLine($"{i} {FastMath.Cos(i * (float)Math.PI / 180)} {FastMath.Sin(i * (float)Math.PI / 180)} {Vector2.VectorFromAngleAndSize(i).ToString()} {Math.Cos(i * Math.PI / 180)} {Math.Sin(i * Math.PI / 180)}");
+			Dictionary<string, string> r = EasyRegex.CSVParseDictionary("test1, name1\n      test2     ,   name2     \n ,");
+			Dictionary<string, string> d = new Dictionary<string, string> { { "test1", "name1" }, { "test2", "name2" } };
+			bool equal = r.Keys.Count == d.Keys.Count && r.Values.Count == d.Values.Count;
+			if (equal)
+				foreach (string key in r.Keys)
+					if (!d.Keys.Contains(key) | d[key] != r[key])
+					{
+						equal = false;
+						break;
+					}
+			Console.WriteLine(equal);
+		}
+	}
+
+	public static class EasyRegex
+	{
+		public static MatchCollection[] CSVParseByLine(string[] lines)
+		{
+			List<MatchCollection> lineMatches = new List<MatchCollection>();
+			Regex splitter = new Regex(@"\s*([^,]*[^\s,])\s*,?");
+
+			foreach (string line in lines)
+				lineMatches.Add(splitter.Matches(line));
+
+			return lineMatches.ToArray();
+		}
+
+		public static Dictionary<string, string> CSVParseDictionary(string data)
+		{
+			Regex splitter = new Regex(@"^[\t ]*(?<key>[^\n,]*[^\s,])[\t ]*,[\t ]*(?<pair>[^\n,]*[^\s,])", RegexOptions.Multiline);
+			MatchCollection matches = splitter.Matches(data);
+			Dictionary<string, string> dictOut = new Dictionary<string, string>();
+
+			foreach (Match m in matches)
+				if (m.Groups["key"].Success && m.Groups["pair"].Success)
+					dictOut[m.Groups["key"].Value] = m.Groups["pair"].Value;
+
+			return dictOut;
 		}
 	}
 
@@ -57,6 +98,15 @@ namespace Tools
 			string[] lines = gluedLines.Split('\n');
 			return lines;
 		}
+		public static string ReadAll(string location)
+		{
+			string lines = "";
+			using (StreamReader stream = new StreamReader(location))
+			{
+				lines = stream.ReadToEnd();
+			}
+			return lines;
+		}
 	}
 
 	public static class FastMath // Math that is often slow or not included in the standard Math library
@@ -73,13 +123,13 @@ namespace Tools
 			float a2 = a * a;
 			return (RadianAngleClamp(x) > Math.PI ? -1 : 1) *
 			/*  a*(1+a2*( //x
-                (-1/6)+a2*( //-x^3/3!
-                (1/120)+a2*( //x^5/5!
-                (-1/5040)+a2*( //-x^7/7!
-                (1/362880)+a2*( //x^9/9!
-                (-1/39916800)+a2*( //-x^11/11!
-                (1/6227020800) //x^13/13!
-                )))))));*/
+				(-1/6)+a2*( //-x^3/3!
+				(1/120)+a2*( //x^5/5!
+				(-1/5040)+a2*( //-x^7/7!
+				(1/362880)+a2*( //x^9/9!
+				(-1/39916800)+a2*( //-x^11/11!
+				(1/6227020800) //x^13/13!
+				)))))));*/
 			a * (1 + a2 * ( //x
 				-0.16666666666666666666666666666667f + a2 * ( //-x^3/3!
 					0.00833333333333333333333333333333f + a2 * ( //x^5/5!
