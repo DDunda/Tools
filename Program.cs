@@ -56,7 +56,7 @@ namespace Tools
 
 	public static class EasyIO
 	{
-		public static void Write(string[] lines, string location)
+		public static void Write(this string location, string[] lines)
 		{
 			if (location == null) throw new ArgumentNullException("path");
 			if (lines == null) throw new ArgumentNullException("lines");
@@ -74,11 +74,11 @@ namespace Tools
 				stream.Write(lines[lines.Length - 1]); // Writes last line without a closing newline character
 			}
 		}
-		public static void Write(byte[] bytes, string location)
+		public static void Write(this string location, byte[] bytes)
 		{
 			File.WriteAllBytes(location, bytes);
 		}
-		public static void Append(string[] lines, string location)
+		public static void Append(this string location, string[] lines)
 		{
 			using (StreamWriter stream = new StreamWriter(location, true))
 			{
@@ -88,17 +88,17 @@ namespace Tools
 				}
 			}
 		}
-		public static string[] Read(string location)
+		public static IEnumerable<string> Read(this string location)
 		{
-			string gluedLines = "";
+			// Adapted from https://stackoverflow.com/a/23408020/11335381
 			using (StreamReader stream = new StreamReader(location))
 			{
-				gluedLines = stream.ReadToEnd();
+				string line;
+				while ((line = stream.ReadLine()) != null)
+					yield return line;
 			}
-			string[] lines = gluedLines.Split('\n');
-			return lines;
 		}
-		public static string ReadAll(string location)
+		public static string ReadAll(this string location)
 		{
 			string lines = "";
 			using (StreamReader stream = new StreamReader(location))
