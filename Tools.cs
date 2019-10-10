@@ -3,241 +3,9 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 namespace Tools
 {
-	public static class EasyBinary
-	{
-		/// <summary>
-		/// Converts a byte to 8 bools.
-		/// </summary>
-		/// <param name="dat">The bool to parse.</param>
-		/// <param name="MSBo">Most significant bit order: Determines if 1 is at the most significant bit (leftmost).</param>
-		/// <returns></returns>
-		public static bool[] SplitByte(byte binary, bool MSBo = false)
-		{
-			// MSB
-			if (MSBo)
-				return new bool[] {
-					(binary & 1  ) == 1,
-					(binary & 2  ) == 2,
-					(binary & 4  ) == 4,
-					(binary & 8  ) == 8,
-					(binary & 16 ) == 16,
-					(binary & 32 ) == 32,
-					(binary & 64 ) == 64,
-					(binary & 128) == 128
-				};
-
-			// LSB
-			return new bool[] {
-				(binary & 128) == 128,
-				(binary & 64 ) == 64,
-				(binary & 32 ) == 32,
-				(binary & 16 ) == 16,
-				(binary & 8  ) == 8,
-				(binary & 4  ) == 4,
-				(binary & 2  ) == 2,
-				(binary & 1  ) == 1
-			};
-		}
-
-		public static byte[] MakeBytes(bool[] bits, bool strict = false, bool MSBo = false)
-		{
-			int dataLen = bits.Length >> 3;
-			byte[] data;
-
-			if ((bits.Length & 7) != 0)
-			{
-				if (strict)
-					throw new System.ArgumentException($"In strict mode the length of the passed bit array must be a multiple of 8 to construct a byte array. {bits.Length} bits were passed.");
-				else
-					data = new byte[dataLen + 1];
-			}
-			else
-			{
-				data = new byte[dataLen];
-			}
-
-			if (MSBo)
-			{
-				for (int i = 0; i < dataLen; i++)
-					data[i] = MakeByte(EasyArray.SubArray(bits, bits.Length - 9 - i << 3, 8), strict, true);
-				if ((bits.Length & 7) != 0)
-					data[dataLen] = MakeByte(EasyArray.SubArray(bits, 0, bits.Length & 7), strict, true);
-			}
-			else
-			{
-				for (int i = 0; i < dataLen; i++)
-					data[i] = MakeByte(EasyArray.SubArray(bits, i << 3, 8), strict, false);
-				if ((bits.Length & 7) != 0)
-					data[dataLen] = MakeByte(EasyArray.SubArray(bits, dataLen << 3, bits.Length & 7), strict, false);
-			}
-
-			return data;
-		}
-
-		public static byte MakeByte(bool[] bits, bool strict = false, bool MSBo = false)
-		{
-			if (bits.Length != 8)
-			{
-				if (strict)
-					throw new System.ArgumentException($"In strict mode a full 8 bits must be passed to construct a byte. {bits.Length} bits were passed.");
-
-				if (bits.Length > 8)
-					bits = bits.SubArray(bits.Length - 8, 8);
-
-				else
-					Array.Resize(ref bits, 8);
-			}
-			if (MSBo)
-			{
-				return (byte)(
-					(bits[7] ? 128 : 0) |
-					(bits[6] ? 64 : 0) |
-					(bits[5] ? 32 : 0) |
-					(bits[4] ? 16 : 0) |
-					(bits[3] ? 8 : 0) |
-					(bits[2] ? 4 : 0) |
-					(bits[1] ? 2 : 0) |
-					(bits[0] ? 1 : 0)
-				);
-			}
-			return (byte)(
-				(bits[0] ? 128 : 0) |
-				(bits[1] ? 64 : 0) |
-				(bits[2] ? 32 : 0) |
-				(bits[3] ? 16 : 0) |
-				(bits[4] ? 8 : 0) |
-				(bits[5] ? 4 : 0) |
-				(bits[6] ? 2 : 0) |
-				(bits[7] ? 1 : 0)
-			);
-		}
-
-		public static string ToString(byte binary)
-		{
-			string strOut = "";
-
-			foreach (bool bit in SplitByte(binary))
-				strOut += bit ? "1" : "0";
-
-			return strOut;
-		}
-
-		public static string ToString(byte[] binary)
-		{
-			string strOut = "";
-
-			foreach (byte data in binary)
-				foreach (bool bit in SplitByte(data))
-					strOut += bit ? "1" : "0";
-
-			return strOut;
-		}
-
-		public static string ToString(bool[] bits)
-		{
-			string strOut = "";
-
-			foreach (bool bit in bits)
-				strOut += bit ? "1" : "0";
-
-			return strOut;
-		}
-
-
-		/// <summary>Shifts a byte left, except bits are wrapped and not truncated</summary>
-		public static byte CyclicLeftShift(byte data, int shift)
-		{
-			shift &= 0x7;
-			byte wrap = (byte)(data >> (8 - shift));
-			return (byte)((data << shift) | wrap);
-		}
-		/// <summary>Shifts an sbyte left, except bits are wrapped and not truncated</summary>
-		public static sbyte CyclicLeftShift(sbyte data, int shift)
-		{
-			shift &= 0x7;
-			byte num = (byte)data;
-			byte wrap = (byte)(num >> (8 - shift));
-			return (sbyte)((num << shift) | wrap);
-		}
-		/// <summary>Shifts an uint left, except bits are wrapped and not truncated</summary>
-		public static uint CyclicLeftShift(uint data, int shift)
-		{
-			shift &= 0x1F;
-			uint wrap = data >> (32 - shift);
-			return (data << shift) | wrap;
-		}
-		/// <summary>Shifts an int left, except bits are wrapped and not truncated</summary>
-		public static int CyclicLeftShift(int data, int shift)
-		{
-			shift &= 0x1F;
-			uint num = (uint)data;
-			uint wrap = num >> (32 - shift);
-			return (int)((num << shift) | wrap);
-		}
-		/// <summary>Shifts an ulong left, except bits are wrapped and not truncated</summary>
-		public static ulong CyclicLeftShift(ulong data, int shift)
-		{
-			shift &= 0x3F;
-			ulong wrap = data >> (64 - shift);
-			return (data << shift) | wrap;
-		}
-		/// <summary>Shifts a long left, except bits are wrapped and not truncated</summary>
-		public static long CyclicLeftShift(long data, int shift)
-		{
-			shift &= 0x3F;
-			ulong num = (ulong)data;
-			ulong wrap = num >> (64 - shift);
-			return (long)((num << shift) | wrap);
-		}
-
-		/// <summary>Shifts a byte right, except bits are wrapped and not truncated</summary>
-		public static byte CyclicRightShift(byte data, int shift)
-		{
-			shift &= 0x7;
-			byte wrap = (byte)(data << (8 - shift));
-			return (byte)((data >> shift) | wrap);
-		}
-		/// <summary>Shifts an sbyte right, except bits are wrapped and not truncated</summary>
-		public static sbyte CyclicRightShift(sbyte data, int shift)
-		{
-			shift &= 0x7;
-			byte num = (byte)data;
-			byte wrap = (byte)(num << (8 - shift));
-			return (sbyte)((num >> shift) | wrap);
-		}
-		/// <summary>Shifts an uint right, except bits are wrapped and not truncated</summary>
-		public static uint CyclicRightShift(uint data, int shift)
-		{
-			shift &= 0x1F;
-			uint wrap = data << (32 - shift);
-			return (data >> shift) | wrap;
-		}
-		/// <summary>Shifts an int right, except bits are wrapped and not truncated</summary>
-		public static int CyclicRightShift(int data, int shift)
-		{
-			shift &= 0x1F;
-			uint num = (uint)data;
-			uint wrap = num << (32 - shift);
-			return (int)((num >> shift) | wrap);
-		}
-		/// <summary>Shifts an ulong right, except bits are wrapped and not truncated</summary>
-		public static ulong CyclicRightShift(ulong data, int shift)
-		{
-			shift &= 0x3F;
-			ulong wrap = data << (64 - shift);
-			return (data >> shift) | wrap;
-		}
-		/// <summary>Shifts a long right, except bits are wrapped and not truncated</summary>
-		public static long CyclicRightShift(long data, int shift)
-		{
-			shift &= 0x3F;
-			ulong num = (ulong)data;
-			ulong wrap = num << (64 - shift);
-			return (long)((num >> shift) | wrap);
-		}
-	}
 
 	public static class EasyArray
 	{
@@ -264,7 +32,7 @@ namespace Tools
 		/// <example>
 		/// Here is an example use of the SubArray method:
 		/// <code>
-		/// string[] array = { "lemon", "apple", "orange", "peach"
+		/// string[] array = { "lemon", "apple", "orange", "peach" };
 		/// int[] subArray = array.SubArray( 2, 3 ); // { 2, 3, 4 }
 		/// </code>
 		/// </example>
@@ -280,10 +48,258 @@ namespace Tools
 					}
 			return hits;
 		}
+
+		/// <summary>
+		/// Returns a random item from this array.
+		/// </summary>
+		/// <example>
+		/// Here is an example use
+		/// <code>
+		/// string[] fruits = { "lemon", "apple", "orange", "peach" };
+		/// string fruit = array.GetRandom(); // "lemon", "apple", "orange", or "peach"
+		/// </code>
+		/// </example>
+		public static T GetRandom<T>(this T[] data)
+		{
+			Random rng = new Random();
+			return data[rng.Next(data.Length)];
+		}
 	}
 
-	public static class EasyRegex
+	public static class EasyFormat
 	{
+		private enum EscapeState
+		{
+			Unescaped,
+			RegularEscape,
+			UnicodeEscape,
+			VariableEscape
+		}
+
+		public static string ParseEscapes(this string stringIn)
+		{
+			string strOut = "";
+			EscapeState escape = EscapeState.Unescaped;
+			int unicodeDepth = 0;
+			int unicodeValue = 0;
+
+			foreach (char letter in stringIn)
+			{
+				switch (escape)
+				{
+					case EscapeState.Unescaped:
+						if (letter == '\\')
+							escape = EscapeState.RegularEscape;
+						else
+							strOut += letter;
+						break;
+					case EscapeState.RegularEscape:
+						switch (letter)
+						{
+							case '\'':
+								strOut += '\'';
+								escape = EscapeState.Unescaped;
+								break;
+							case '"':
+								strOut += '"';
+								escape = EscapeState.Unescaped;
+								break;
+							case '\\':
+								strOut += '\\';
+								escape = EscapeState.Unescaped;
+								break;
+							case '0':
+								strOut += '\0';
+								escape = EscapeState.Unescaped;
+								break;
+							case 'a':
+								strOut += '\a';
+								escape = EscapeState.Unescaped;
+								break;
+							case 'b':
+								strOut += '\b';
+								escape = EscapeState.Unescaped;
+								break;
+							case 'f':
+								strOut += '\f';
+								escape = EscapeState.Unescaped;
+								break;
+							case 'n':
+								strOut += '\n';
+								escape = EscapeState.Unescaped;
+								break;
+							case 'r':
+								strOut += '\r';
+								escape = EscapeState.Unescaped;
+								break;
+							case 't':
+								strOut += '\t';
+								escape = EscapeState.Unescaped;
+								break;
+							case 'v':
+								strOut += '\v';
+								escape = EscapeState.Unescaped;
+								break;
+							case 'u':
+								unicodeDepth = 4;
+								unicodeValue = 0;
+								escape = EscapeState.UnicodeEscape;
+								break;
+							case 'U':
+								unicodeDepth = 8;
+								unicodeValue = 0;
+								escape = EscapeState.UnicodeEscape;
+								break;
+							case 'x':
+								unicodeDepth = 0;
+								unicodeValue = 0;
+								escape = EscapeState.VariableEscape;
+								break;
+							default:
+								throw new FormatException($"Unrecognized escape '\\{letter}'");
+
+						}
+						break;
+					case EscapeState.UnicodeEscape:
+						unicodeDepth--;
+						switch ($"{letter}".ToLower()[0])
+						{
+							case '0':
+								break;
+							case '1':
+								unicodeValue += 1 << 4 * unicodeDepth;
+								break;
+							case '2':
+								unicodeValue += 2 << 4 * unicodeDepth;
+								break;
+							case '3':
+								unicodeValue += 3 << 4 * unicodeDepth;
+								break;
+							case '4':
+								unicodeValue += 4 << 4 * unicodeDepth;
+								break;
+							case '5':
+								unicodeValue += 5 << 4 * unicodeDepth;
+								break;
+							case '6':
+								unicodeValue += 6 << 4 * unicodeDepth;
+								break;
+							case '7':
+								unicodeValue += 7 << 4 * unicodeDepth;
+								break;
+							case '8':
+								unicodeValue += 8 << 4 * unicodeDepth;
+								break;
+							case '9':
+								unicodeValue += 9 << 4 * unicodeDepth;
+								break;
+							case 'a':
+								unicodeValue += 10 << 4 * unicodeDepth;
+								break;
+							case 'b':
+								unicodeValue += 11 << 4 * unicodeDepth;
+								break;
+							case 'c':
+								unicodeValue += 12 << 4 * unicodeDepth;
+								break;
+							case 'd':
+								unicodeValue += 13 << 4 * unicodeDepth;
+								break;
+							case 'e':
+								unicodeValue += 14 << 4 * unicodeDepth;
+								break;
+							case 'f':
+								unicodeValue += 15 << 4 * unicodeDepth;
+								break;
+							default:
+								throw new FormatException($"Invalid hex value '{letter}'");
+
+						}
+						if (unicodeDepth == 0)
+						{
+							escape = EscapeState.Unescaped;
+							strOut += char.ConvertFromUtf32(unicodeValue);
+						}
+						break;
+					case EscapeState.VariableEscape:
+						unicodeDepth++;
+						unicodeValue <<= 4;
+						switch ($"{letter}".ToLower()[0])
+						{
+							case '0':
+								break;
+							case '1':
+								unicodeValue += 1 << unicodeDepth;
+								break;
+							case '2':
+								unicodeValue += 2;
+								break;
+							case '3':
+								unicodeValue += 3;
+								break;
+							case '4':
+								unicodeValue += 4;
+								break;
+							case '5':
+								unicodeValue += 5;
+								break;
+							case '6':
+								unicodeValue += 6;
+								break;
+							case '7':
+								unicodeValue += 7;
+								break;
+							case '8':
+								unicodeValue += 8;
+								break;
+							case '9':
+								unicodeValue += 9;
+								break;
+							case 'a':
+								unicodeValue += 10;
+								break;
+							case 'b':
+								unicodeValue += 11;
+								break;
+							case 'c':
+								unicodeValue += 12;
+								break;
+							case 'd':
+								unicodeValue += 13;
+								break;
+							case 'e':
+								unicodeValue += 14;
+								break;
+							case 'f':
+								unicodeValue += 15;
+								break;
+							default:
+								if (unicodeDepth == 1)
+									throw new FormatException($"Invalid hex value '{letter}'");
+								unicodeValue >>= 4;
+								strOut += char.ConvertFromUtf32(unicodeValue);
+								escape = EscapeState.Unescaped;
+								break;
+
+						}
+						if (unicodeDepth == 4 && escape == EscapeState.VariableEscape)
+						{
+							escape = EscapeState.Unescaped;
+							strOut += char.ConvertFromUtf32(unicodeValue);
+						}
+						break;
+				}
+			}
+
+			if (escape == EscapeState.VariableEscape && unicodeDepth != 0)
+				strOut += char.ConvertFromUtf32(unicodeValue);
+
+			else if (escape != EscapeState.Unescaped)
+				throw new FormatException("Unfinished escape");
+
+			return strOut;
+		}
+
 		public static MatchCollection[] CSVParseByLine(string[] lines)
 		{
 			List<MatchCollection> lineMatches = new List<MatchCollection>();
@@ -306,61 +322,6 @@ namespace Tools
 					dictOut[m.Groups["key"].Value] = m.Groups["pair"].Value;
 
 			return dictOut;
-		}
-	}
-
-	public static class EasyIO
-	{
-		public static void Write(this string location, string[] lines)
-		{
-			if (location == null) throw new ArgumentNullException("path");
-			if (lines == null) throw new ArgumentNullException("lines");
-
-			if (lines.Length == 0)
-			{
-				using (File.Create(location)) { } // Create an empty file
-				return;
-			}
-			using (StreamWriter stream = new StreamWriter(location))
-			{
-				for (int i = 0; i < lines.Length - 1; i++)
-					stream.WriteLine(lines[i]);
-
-				stream.Write(lines[lines.Length - 1]); // Writes last line without a closing newline character
-			}
-		}
-		public static void Write(this string location, byte[] bytes)
-		{
-			File.WriteAllBytes(location, bytes);
-		}
-		public static void Append(this string location, string[] lines)
-		{
-			using (StreamWriter stream = new StreamWriter(location, true))
-			{
-				foreach (string line in lines)
-				{
-					stream.WriteLine(line);
-				}
-			}
-		}
-		public static IEnumerable<string> Read(this string location)
-		{
-			// Adapted from https://stackoverflow.com/a/23408020/11335381
-			using (StreamReader stream = new StreamReader(location))
-			{
-				string line;
-				while ((line = stream.ReadLine()) != null)
-					yield return line;
-			}
-		}
-		public static string ReadAll(this string location)
-		{
-			string lines = "";
-			using (StreamReader stream = new StreamReader(location))
-			{
-				lines = stream.ReadToEnd();
-			}
-			return lines;
 		}
 	}
 
@@ -507,7 +468,7 @@ namespace Tools
 		}
 		public override int GetHashCode()
 		{
-			return EasyBinary.CyclicLeftShift(x.GetHashCode(), 6) ^ y.GetHashCode();
+			return EasyBinary.EasyBinary.CyclicLeftShift(x.GetHashCode(), 6) ^ y.GetHashCode();
 		}
 
 		public static Vector2 operator +(Vector2 v1, Vector2 v2)
