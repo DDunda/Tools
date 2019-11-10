@@ -68,17 +68,37 @@ namespace Tools
 
 	public static class EasyFormat
 	{
+		/// <summary>
+		/// A list of states for the ParseEscapes method
+		/// </summary>
 		private enum EscapeState
 		{
+			/// <summary>Regular text level, no escape</summary>
 			Unescaped,
+			/// <summary>Backslash escape fired (\...)</summary>
 			RegularEscape,
+			/// <summary>Unicode value escape fired with set length (\uXXXX or \uXXXXXXXX)</summary>
 			UnicodeEscape,
+			/// <summary>Unicode value escape fired with unknown length (\uX - \uXXXXXXXX)</summary>
 			VariableEscape
 		}
 
+		/// <summary>
+		/// Reads a string and parses escape sequences
+		/// </summary>
+		/// <example>
+		/// <code>
+		/// ParseEscapes("\\r\\n\\0"); // Returns "\r\n\0"
+		/// ParseEscapes("\\uFE"); // Returns "\uFE"
+		/// </code>
+		/// </example>
 		public static string ParseEscapes(this string stringIn)
 		{
+			// What is returned
 			string strOut = "";
+			// Index correlates with value
+			string hexidecimal = "0123456789abcdef";
+			// State of parser
 			EscapeState escape = EscapeState.Unescaped;
 			int unicodeDepth = 0;
 			int unicodeValue = 0;
@@ -162,59 +182,11 @@ namespace Tools
 						break;
 					case EscapeState.UnicodeEscape:
 						unicodeDepth--;
-						switch ($"{letter}".ToLower()[0])
-						{
-							case '0':
-								break;
-							case '1':
-								unicodeValue += 1 << 4 * unicodeDepth;
-								break;
-							case '2':
-								unicodeValue += 2 << 4 * unicodeDepth;
-								break;
-							case '3':
-								unicodeValue += 3 << 4 * unicodeDepth;
-								break;
-							case '4':
-								unicodeValue += 4 << 4 * unicodeDepth;
-								break;
-							case '5':
-								unicodeValue += 5 << 4 * unicodeDepth;
-								break;
-							case '6':
-								unicodeValue += 6 << 4 * unicodeDepth;
-								break;
-							case '7':
-								unicodeValue += 7 << 4 * unicodeDepth;
-								break;
-							case '8':
-								unicodeValue += 8 << 4 * unicodeDepth;
-								break;
-							case '9':
-								unicodeValue += 9 << 4 * unicodeDepth;
-								break;
-							case 'a':
-								unicodeValue += 10 << 4 * unicodeDepth;
-								break;
-							case 'b':
-								unicodeValue += 11 << 4 * unicodeDepth;
-								break;
-							case 'c':
-								unicodeValue += 12 << 4 * unicodeDepth;
-								break;
-							case 'd':
-								unicodeValue += 13 << 4 * unicodeDepth;
-								break;
-							case 'e':
-								unicodeValue += 14 << 4 * unicodeDepth;
-								break;
-							case 'f':
-								unicodeValue += 15 << 4 * unicodeDepth;
-								break;
-							default:
-								throw new FormatException($"Invalid hex value '{letter}'");
 
-						}
+						if (!hexidecimal.Contains(letter)) throw new FormatException($"Invalid hex value '{letter}'");
+
+						unicodeValue += hexidecimal.IndexOf(letter) << (4 * unicodeDepth);
+
 						if (unicodeDepth == 0)
 						{
 							escape = EscapeState.Unescaped;
@@ -223,83 +195,49 @@ namespace Tools
 						break;
 					case EscapeState.VariableEscape:
 						unicodeDepth++;
+						// A hexidecimal character adds 4 bits. the value is shifted to accomodate
 						unicodeValue <<= 4;
-						switch ($"{letter}".ToLower()[0])
+						if (hexidecimal.Contains(letter))
 						{
-							case '0':
-								break;
-							case '1':
-								unicodeValue += 1 << unicodeDepth;
-								break;
-							case '2':
-								unicodeValue += 2;
-								break;
-							case '3':
-								unicodeValue += 3;
-								break;
-							case '4':
-								unicodeValue += 4;
-								break;
-							case '5':
-								unicodeValue += 5;
-								break;
-							case '6':
-								unicodeValue += 6;
-								break;
-							case '7':
-								unicodeValue += 7;
-								break;
-							case '8':
-								unicodeValue += 8;
-								break;
-							case '9':
-								unicodeValue += 9;
-								break;
-							case 'a':
-								unicodeValue += 10;
-								break;
-							case 'b':
-								unicodeValue += 11;
-								break;
-							case 'c':
-								unicodeValue += 12;
-								break;
-							case 'd':
-								unicodeValue += 13;
-								break;
-							case 'e':
-								unicodeValue += 14;
-								break;
-							case 'f':
-								unicodeValue += 15;
-								break;
-							default:
-								if (unicodeDepth == 1)
-									throw new FormatException($"Invalid hex value '{letter}'");
-								unicodeValue >>= 4;
-								strOut += char.ConvertFromUtf32(unicodeValue);
-								escape = EscapeState.Unescaped;
-								break;
-
+							unicodeValue += hexidecimal.IndexOf(letter);
 						}
+						else
+						{
+							if (unicodeDepth == 1) throw new FormatException($"Invalid hex value '{letter}'");
+							unicodeValue >>= 4;
+							strOut += char.ConvertFromUtf32(unicodeValue);
+							escape = EscapeState.Unescaped;
+						}
+
 						if (unicodeDepth == 4 && escape == EscapeState.VariableEscape)
 						{
-							escape = EscapeState.Unescaped;
 							strOut += char.ConvertFromUtf32(unicodeValue);
+							escape = EscapeState.Unescaped;
 						}
 						break;
 				}
 			}
 
+			// Text is finished processing and a variable unicode escape is closed
 			if (escape == EscapeState.VariableEscape && unicodeDepth != 0)
 				strOut += char.ConvertFromUtf32(unicodeValue);
 
+			// Text is finished processing and an escape was not finalised
 			else if (escape != EscapeState.Unescaped)
 				throw new FormatException("Unfinished escape");
 
 			return strOut;
 		}
 
+		/// <summary>
+		/// Splits csv strings along comma seperations, stipping whitespace.
+		/// </summary>
+		/// /// <example>
+		/// <code>
+		/// CSVParseByLine("10,15,20"); // Returns a collection with "10","15", and "20"
+		/// CSVParseByLine("a,\tb,     c "); // Returns a collection with "a","b", and "c"
+		/// </code>
+		/// </example>
 		public static MatchCollection[] CSVParseByLine(string[] lines)
 		{
 			List<MatchCollection> lineMatches = new List<MatchCollection>();
@@ -311,6 +249,16 @@ namespace Tools
 			return lineMatches.ToArray();
 		}
 
+		/// <summary>
+		/// Assuming each line has a single comma, this will split a csv doc into keys and pairs in a dictionary
+		/// </summary>
+		/// /// <example>
+		/// <code>
+		/// CSVParseByLine("Carrots, 50\r\nLemons, 20"); // Returns a dictionary of {{"Carrots","50"},{"Lemons","20"}}
+		/// CSVParseByLine("a,b\r\nc\r\nd,e"); // Returns {{"a","b"},{"d","e"}}
+		/// </code>
+		/// </example>
+		// Assuming data 
 		public static Dictionary<string, string> CSVParseDictionary(string data)
 		{
 			Regex splitter = new Regex(@"^[\t ]*(?<key>[^\n,]*[^\s,])[\t ]*,[\t ]*(?<pair>[^\n,]*[^\s,])", RegexOptions.Multiline);
@@ -325,7 +273,10 @@ namespace Tools
 		}
 	}
 
-	public static class FastMath // Math that is often slow or not included in the standard Math library
+	/// <summary>
+	/// Math that is often slow or not included in the standard Math library
+	/// </summary>
+	public static class FastMath
 	{
 		public static float Sinc(float x) => x == 0 ? 1 : Sin(x) / x;
 
@@ -369,6 +320,8 @@ namespace Tools
 		public static long Floor(double a) => a >= 0 || a % 1 == 0 ? (long)a : (long)a - 1; // Why are rounded/floored/ceiled(?) values doubles in default math? They are whole numbers!
 		public static long Ceiling(double a) => a <= 0 || a % 1 == 0 ? (long)a : (long)a + 1;
 		public static long Round(double a) => Floor(a + 0.5f);
+
+		public static float PI = 3.1415926535897932384626433f;
 	}
 
 	public sealed class Vector2 : VectorN
